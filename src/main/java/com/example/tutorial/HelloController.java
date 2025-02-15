@@ -176,7 +176,7 @@ public class HelloController {
                     player.setText("Игроков: " + players);
                     uptime.setText("Сервер: " + serverName);
                     connect.setText("Connect: " + connectLink);
-                    qule.setText("Очередь: " + latsQueued); //TEST GIT
+                    qule.setText("Очередь: " + latsQueued); //TEST GIT dddd
 
                     if (!url.isEmpty()) {
                         loadMapInWebView(url);

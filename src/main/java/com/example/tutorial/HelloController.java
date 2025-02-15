@@ -176,10 +176,10 @@ public class HelloController {
                     player.setText("Игроков: " + players);
                     uptime.setText("Сервер: " + serverName);
                     connect.setText("Connect: " + connectLink);
-                    qule.setText("Очередь: " + latsQueued); //TEST GIT dddd
+                    qule.setText("Очередь: " + latsQueued);
 
                     if (!url.isEmpty()) {
-                        loadMapInWebView(url);
+                        loadMapInWebView(url);// //
                     } else {
                         System.out.println("Карта недоступна!");
                     }

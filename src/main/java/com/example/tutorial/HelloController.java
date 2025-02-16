@@ -10,28 +10,30 @@ import javafx.scene.web.WebView;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HelloController {
-
-    public Text qule;
     @FXML
-    private Button GetData;
+    private Text qule, online, player, uptime, connect;
     @FXML
-    private Button ServerMaps;
-    private String url = "";
-
-    @FXML
-    private WebView webView;
+    private Button GetData, ServerMaps;
 
     @FXML
     private TextField ServerSearch;
 
-    @FXML
-    private Text connect, online, player, uptime;
+    private String serverID = "";
+    private String url = "";
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     @FXML
     void initialize() {
@@ -42,37 +44,25 @@ public class HelloController {
             }
         });
 
-        ServerMaps.setOnAction(event -> {
-            System.out.println("Нажата кнопка");
-            System.out.println("Карта URL: " + url);
-            if (!url.isEmpty()) {
-                loadMapInWebView(url);
-                System.out.println("Карта URL: " + url);
-            } else {
-                System.out.println("Карта недоступна!");
-            }
-        });
-    }
+//        ServerMaps.setOnAction(event -> {
+//            System.out.println("Нажата кнопка");
+//            if (!url.isEmpty()) {
+//                loadMapInWebView(url);
+//                System.out.println("Карта загружена: " + url);
+//            } else {
+//                System.out.println("Карта недоступна!");
+//            }
+//        });
 
-    private void loadMapInWebView(String mapUrl) {
-        javafx.application.Platform.runLater(() -> {
-            try {
-                if (mapUrl == null || mapUrl.isEmpty()) {
-                    System.out.println("Ошибка: пустой URL карты");
-                    return;
-                }
-                WebEngine webEngine = webView.getEngine();
-                webEngine.load(mapUrl);
-            } catch (Exception e) {
-                System.out.println("Ошибка загрузки карты: " + e.getMessage());
-            }
-        });
+        // Автообновление раз в 30 секунд
+        scheduler.scheduleAtFixedRate(this::updateServerData, 0, 3, TimeUnit.SECONDS);
     }
-
+    private static final Logger LOGGER = Logger.getLogger(HelloController.class.getName());
     private void findServerID(String serverName) {
+
         new Thread(() -> {
             try {
-                String encodedName = URLEncoder.encode(serverName, "UTF-8");
+                String encodedName = URLEncoder.encode(serverName, StandardCharsets.UTF_8);
                 String searchUrl = "https://api.battlemetrics.com/servers?filter[search]=" + encodedName;
                 HttpURLConnection conn = (HttpURLConnection) new URL(searchUrl).openConnection();
                 conn.setRequestMethod("GET");
@@ -89,43 +79,48 @@ public class HelloController {
                 JSONArray servers = json.getJSONArray("data");
 
                 if (servers.length() > 0) {
-                    String serverID = servers.getJSONObject(0).getString("id"); // Берем первый сервер из списка
-                    loadServerData(serverID);
+                    serverID = servers.getJSONObject(0).getString("id");
+                    updateServerData();
                 } else {
                     javafx.application.Platform.runLater(() -> {
                         online.setText("Server not found!");
                     });
                 }
-
             } catch (Exception e) {
-                e.printStackTrace();
-                javafx.application.Platform.runLater(() -> {
-                    online.setText("Error finding server");
-                });
+                LOGGER.log(Level.SEVERE, "Ошибка поиска сервера", e);
+                javafx.application.Platform.runLater(() -> online.setText("Ошибка 404!"));
             }
         }).start();
     }
 
-    private void loadServerData(String serverID) {
+    private String fetchServerData() throws IOException {
+        if (serverID.isEmpty()) {
+            return "{}";
+        }
+        String apiUrl = "https://api.battlemetrics.com/servers/" + serverID;
+        HttpURLConnection conn = (HttpURLConnection) new URL(apiUrl).openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Accept", "application/json");
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        StringBuilder response = new StringBuilder();
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+        return response.toString();
+    }
+
+    private void updateServerData() {
         new Thread(() -> {
             try {
-                String apiUrl = "https://api.battlemetrics.com/servers/" + serverID;
-                HttpURLConnection conn = (HttpURLConnection) new URL(apiUrl).openConnection();
-                conn.setRequestMethod("GET");
-
-                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                StringBuilder response = new StringBuilder();
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-                reader.close();
-
-                JSONObject jsonResponse = new JSONObject(response.toString());
+                String jsonResponseString = fetchServerData();
+                JSONObject jsonResponse = new JSONObject(jsonResponseString);
 
                 if (!jsonResponse.has("data")) {
-                    System.out.println("Ошибка: `data` отсутствует!");
+                    System.out.println("Ошибка: data отсутствует!");
                     return;
                 }
 
@@ -133,15 +128,14 @@ public class HelloController {
                 JSONObject attributes = data.optJSONObject("attributes");
 
                 if (attributes == null) {
-                    System.out.println("Ошибка: `attributes` отсутствует!");
+                    System.out.println("Ошибка: attributes отсутствует!");
                     return;
                 }
 
                 JSONObject details = attributes.optJSONObject("details");
-
                 if (details != null) {
                     JSONObject rustMaps = details.optJSONObject("rust_maps");
-                    if(rustMaps != null){
+                    if (rustMaps != null) {
                         url = rustMaps.optString("url", "");
                     }
                 }
@@ -151,12 +145,8 @@ public class HelloController {
                 int players = attributes.optInt("players", 0);
                 String connectLink = attributes.optString("ip", "Нет данных") + ":" + attributes.optInt("port", 0);
 
-                // Поиск очереди
                 int queuedPlayers = 0;
-
-
-                JSONArray tags = (details != null && details.has("tags")) ? details.optJSONArray("tags") : new JSONArray();
-
+                JSONArray tags = details != null ? details.optJSONArray("tags") : new JSONArray();
                 for (int i = 0; i < tags.length(); i++) {
                     String tag = tags.optString(i, "");
                     if (tag.startsWith("qp")) {
@@ -169,28 +159,39 @@ public class HelloController {
                     }
                 }
 
-                int latsQueued = queuedPlayers;
+                int lastQueued = queuedPlayers;
 
                 javafx.application.Platform.runLater(() -> {
                     online.setText("Онлайн: " + (isOnline ? "Да" : "Нет"));
                     player.setText("Игроков: " + players);
                     uptime.setText("Сервер: " + serverName);
                     connect.setText("Connect: " + connectLink);
-                    qule.setText("Очередь: " + latsQueued);
+                    qule.setText("Очередь: " + lastQueued);
 
-                    if (!url.isEmpty()) {
-                        loadMapInWebView(url);// //
-                    } else {
-                        System.out.println("Карта недоступна!");
-                    }
+//                    if (!url.isEmpty()) {
+//                        loadMapInWebView(url);
+//                    }
                 });
 
             } catch (Exception e) {
-                e.printStackTrace();
-                javafx.application.Platform.runLater(() -> {
-                    online.setText("Ошибка!");
-                });
+                LOGGER.log(Level.SEVERE, "Ошибка при загрузке данных", e);
+                javafx.application.Platform.runLater(() -> online.setText("Ошибка загрузки данных!"));
             }
         }).start();
     }
+
+//    private void loadMapInWebView(String mapUrl) {
+//        javafx.application.Platform.runLater(() -> {
+//            try {
+//                if (mapUrl == null || mapUrl.isEmpty()) {
+//                    System.out.println("Ошибка: пустой URL карты");
+//                    return;
+//                }
+//                WebEngine webEngine = webView.getEngine();
+//                webEngine.load(mapUrl);
+//            } catch (Exception e) {
+//                System.out.println("Ошибка загрузки карты: " + e.getMessage());
+//            }
+//        });
+//    }
 }

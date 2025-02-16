@@ -11,6 +11,7 @@ module com.example.tutorial {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
     requires org.json;
+    requires java.logging;
 
     opens com.example.tutorial to javafx.fxml;
     exports com.example.tutorial;

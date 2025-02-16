@@ -1,12 +1,17 @@
 package com.example.tutorial;
 
 import javafx.concurrent.Worker;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.Stage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -29,6 +34,26 @@ public class HelloController {
     private Button GetData, ServerMaps;
 
     @FXML
+    private Button goToSecondScence;
+
+
+    @FXML
+    void switchToSecondScence(ActionEvent event){
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("second.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) goToSecondScence.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+
+    @FXML
     private TextField ServerSearch;
 
     private String serverID = "";
@@ -43,6 +68,7 @@ public class HelloController {
                 findServerID(serverName);
             }
         });
+        goToSecondScence.setOnAction(this::switchToSecondScence);
 
 //        ServerMaps.setOnAction(event -> {
 //            System.out.println("Нажата кнопка");

@@ -39,6 +39,7 @@
          </font>
       </Text>
       <Button fx:id="ServerMaps" layoutX="190.0" layoutY="357.0" mnemonicParsing="false" text="Карта" />
+      <Button fx:id="goToSecondScence" layoutX="267.0" layoutY="357.0" mnemonicParsing="false" text="Button" />
 
    </children>
 </AnchorPane>

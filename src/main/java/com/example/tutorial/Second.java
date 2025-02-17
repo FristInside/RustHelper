@@ -2,6 +2,7 @@ package com.example.tutorial;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
@@ -33,7 +34,11 @@ public class Second {
 
             Stage stage = (Stage) gaBack.getScene().getWindow(); // Получаем текущее окно
             stage.setScene(new Scene(root));
+
+            
             stage.show();
+            
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -44,4 +49,7 @@ public class Second {
         gaBack.setOnAction(this::goBack);
     }
 
+
+    /*~~~~~ BUGS ~~~~~~~
+    * FIXED BUG FOR BOTTON STAYLE */
 }

@@ -1,5 +1,6 @@
 package com.example.tutorial;
 
+import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -14,6 +15,7 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -146,7 +148,7 @@ public class HelloController {
                 JSONObject jsonResponse = new JSONObject(jsonResponseString);
 
                 if (!jsonResponse.has("data")) {
-                    System.out.println("Ошибка: data отсутствует!");
+                    //System.out.println("Ошибка: data отсутствует!");
                     return;
                 }
 
@@ -187,7 +189,7 @@ public class HelloController {
 
                 int lastQueued = queuedPlayers;
 
-                javafx.application.Platform.runLater(() -> {
+                Platform.runLater(() -> {
                     online.setText("Онлайн: " + (isOnline ? "Да" : "Нет"));
                     player.setText("Игроков: " + players);
                     uptime.setText("Сервер: " + serverName);
@@ -201,7 +203,7 @@ public class HelloController {
 
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Ошибка при загрузке данных", e);
-                javafx.application.Platform.runLater(() -> online.setText("Ошибка загрузки данных!"));
+                Platform.runLater(() -> online.setText("Ошибка загрузки данных!"));
             }
         }).start();
     }

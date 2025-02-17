@@ -10,8 +10,8 @@ module com.example.tutorial {
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
-    requires org.json;
     requires java.logging;
+    requires org.json;
 
     opens com.example.tutorial to javafx.fxml;
     exports com.example.tutorial;

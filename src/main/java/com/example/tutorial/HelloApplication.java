@@ -17,7 +17,7 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
         stage.setResizable(false);
         stage.show();
-        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/stayle.css")).toExternalForm());
+        //scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/stayle.css")).toExternalForm());
     }
 
     public static void main(String[] args) {
